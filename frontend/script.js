@@ -12,7 +12,6 @@ function formatDate(dateString) {
 }
 
 // Carregar transferências
-// Carregar transferências
 async function loadTransfers() {
     try {
         const response = await fetch(`${API_URL}/transferencias`);
@@ -20,17 +19,27 @@ async function loadTransfers() {
         
         const transfers = await response.json();
         
-        // ⭐ ADICIONE ESTAS LINHAS ⭐
-        // Ordenar do mais RECENTE para o mais ANTIGO
+        // Ordenar do mais recente para o mais antigo
         const transfersOrdenadas = transfers.sort((a, b) => {
-            return new Date(b.data) - new Date(a.data);
+            const dataB = converterDataHora(b.dataHora);
+            const dataA = converterDataHora(a.dataHora);
+            return dataB - dataA;
         });
         
-        displayTransfers(transfersOrdenadas); // ← Use o array ordenado
+        displayTransfers(transfersOrdenadas);
     } catch (error) {
         console.error('Erro:', error);
         transferList.innerHTML = `<p class="error-message">${error.message}</p>`;
     }
+}
+
+// Função para converter o formato brasileiro
+function converterDataHora(dataHoraString) {
+    const [data, hora] = dataHoraString.split(' - ');
+    const [dia, mes, ano] = data.split('/');
+    const [h, m, s] = hora.split(':');
+    
+    return new Date(ano, mes - 1, dia, h, m, s);
 }
 
 // Exibir transferências em cards
