@@ -12,13 +12,21 @@ function formatDate(dateString) {
 }
 
 // Carregar transferências
+// Carregar transferências
 async function loadTransfers() {
     try {
         const response = await fetch(`${API_URL}/transferencias`);
         if (!response.ok) throw new Error('Erro ao carregar transferências');
         
         const transfers = await response.json();
-        displayTransfers(transfers);
+        
+        // ⭐ ADICIONE ESTAS LINHAS ⭐
+        // Ordenar do mais RECENTE para o mais ANTIGO
+        const transfersOrdenadas = transfers.sort((a, b) => {
+            return new Date(b.data) - new Date(a.data);
+        });
+        
+        displayTransfers(transfersOrdenadas); // ← Use o array ordenado
     } catch (error) {
         console.error('Erro:', error);
         transferList.innerHTML = `<p class="error-message">${error.message}</p>`;
