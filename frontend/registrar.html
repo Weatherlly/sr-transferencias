@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Transferência - Super Raimundinho</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Super Raimundinho</h1>
+            <h2>Registro de Transferências</h2>
+            <a href="index.html" class="btn-new">
+                <i class="fas fa-arrow-left"></i> Voltar para Transferências
+            </a>
+        </div>
+
+        <form id="transferForm">
+            <!-- Data/Hora -->
+            <div class="form-group">
+                <label for="dataHora">Data e Hora:</label>
+                <input type="text" id="dataHora" readonly>
+            </div>
+
+            <!-- Loja Origem -->
+            <div class="form-group">
+                <label for="lojaOrigem">Loja Origem:</label>
+                <select id="lojaOrigem" required>
+                    <option value="">Selecione a loja de origem...</option>
+                    <option value="Loja 01">Loja 01</option>
+                    <option value="Loja 02">Loja 02</option>
+                </select>
+            </div>
+
+            <!-- Loja Destino -->
+            <div class="form-group">
+                <label for="lojaDestino">Loja Destino:</label>
+                <select id="lojaDestino" required>
+                    <option value="">Selecione a loja de destino...</option>
+                    <option value="Loja 02">Loja 02</option>
+                    <option value="Loja 03">Loja 03</option>
+                    <option value="Loja 04">Loja 04</option>
+                    <option value="Loja 05">Loja 05</option>
+                </select>
+            </div>
+
+            <!-- Título da Seção de Pizzas -->
+            <div class="section-title">
+                <i class="fas fa-pizza-slice"></i>
+                <h3>Pizzas</h3>
+            </div>
+
+            <!-- Itens de Pizza (quantidade inteira) -->
+            <div class="form-group">
+                <label for="item1">34902 - Pizza Calabresa da Casa:</label>
+                <input type="number" id="item1" min="0" step="1" placeholder="Quantidade">
+            </div>
+
+            <div class="form-group">
+                <label for="item2">26176 - Pizza Frango da casa:</label>
+                <input type="number" id="item2" min="0" step="1" placeholder="Quantidade">
+            </div>
+
+            <div class="form-group">
+                <label for="item3">26179 - Pizza Marguerita da casa:</label>
+                <input type="number" id="item3" min="0" step="1" placeholder="Quantidade">
+            </div>
+
+            <div class="form-group">
+                <label for="item4">26177 - Pizza Mista da casa:</label>
+                <input type="number" id="item4" min="0" step="1" placeholder="Quantidade">
+            </div>
+
+            <div class="form-group">
+                <label for="item5">34901 - Pizza Portuguesa da casa:</label>
+                <input type="number" id="item5" min="0" step="1" placeholder="Quantidade">
+            </div>
+
+            <!-- Título da Seção de Sopas -->
+            <div class="section-title">
+                <i class="fas fa-utensils"></i>
+                <h3>Sopas e Caldos</h3>
+            </div>
+
+            <!-- Itens de Sopa (peso decimal) -->
+            <div class="form-group">
+                <label for="item6">160599 - Sopa de Costela:</label>
+                <input type="number" id="item6" min="0" step="0.001" placeholder="Peso (kg)">
+            </div>
+
+            <div class="form-group">
+                <label for="item7">151542 - Sopa Canja de Galinha:</label>
+                <input type="number" id="item7" min="0" step="0.001" placeholder="Peso (kg)">
+            </div>
+
+            <div class="form-group">
+                <label for="item8">151559 - Caldo de Carne:</label>
+                <input type="number" id="item8" min="0" step="0.001" placeholder="Peso (kg)">
+            </div>
+
+            <button type="submit">
+                <i class="fas fa-save"></i> Registrar Transferência
+            </button>
+        </form>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // Configuração do endpoint do servidor
+        const API_URL = 'http://localhost:3000/api'; // Altere para o IP do seu servidor
+
+        // Atualiza data/hora atual
+        function atualizarDataHora() {
+            const now = new Date();
+            const dia = String(now.getDate()).padStart(2, '0');
+            const mes = String(now.getMonth() + 1).padStart(2, '0');
+            const ano = now.getFullYear();
+            const horas = String(now.getHours()).padStart(2, '0');
+            const minutos = String(now.getMinutes()).padStart(2, '0');
+            const segundos = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('dataHora').value = `${dia}/${mes}/${ano} - ${horas}:${minutos}:${segundos}`;
+        }
+
+        // Mostra mensagem de status
+        function showStatus(message, isSuccess) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = isSuccess ? 'success' : 'error';
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Envia dados para o servidor
+        async function enviarParaServidor(data) {
+            try {
+                const response = await fetch(`${API_URL}/transferencias`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus(result.message || 'Transferência registrada com sucesso!', true);
+                    return true;
+                } else {
+                    showStatus(result.message || 'Erro ao registrar transferência', false);
+                    return false;
+                }
+            } catch (error) {
+                showStatus('Erro ao conectar com o servidor: ' + error.message, false);
+                return false;
+            }
+        }
+
+        // Atualiza a data/hora quando a página carrega
+        window.onload = atualizarDataHora;
+
+        // Validação do formulário
+        document.getElementById('transferForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Valida lojas diferentes
+            const lojaOrigem = document.getElementById('lojaOrigem').value;
+            const lojaDestino = document.getElementById('lojaDestino').value;
+            
+            if (lojaOrigem === lojaDestino) {
+                showStatus('A loja de origem e destino não podem ser iguais!', false);
+                return;
+            }
+            
+            // Coleta os dados do formulário
+            const transferencia = {
+                dataHora: document.getElementById('dataHora').value,
+                lojaOrigem: lojaOrigem,
+                lojaDestino: lojaDestino,
+                itensQuantidade: {
+                    "34902 - Pizza Calabresa da Casa": document.getElementById('item1').value || 0,
+                    "26176 - Pizza Frango da casa": document.getElementById('item2').value || 0,
+                    "26179 - Pizza Marguerita da casa": document.getElementById('item3').value || 0,
+                    "26177 - Pizza Mista da casa": document.getElementById('item4').value || 0,
+                    "34901 - Pizza Portuguesa da casa": document.getElementById('item5').value || 0
+                },
+                itensPeso: {
+                    "160599 - Sopa de Costela": document.getElementById('item6').value || 0,
+                    "151542 - Sopa Canja de Galinha": document.getElementById('item7').value || 0,
+                    "151559 - Caldo de Carne": document.getElementById('item8').value || 0
+                }
+            };
+            
+            // Envia para o servidor
+            const enviado = await enviarParaServidor(transferencia);
+            
+            if (enviado) {
+                // Limpa o formulário após o envio
+                this.reset();
+                atualizarDataHora();
+            }
+        });
+    </script>
+</body>
+</html>
