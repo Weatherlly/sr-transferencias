@@ -1,5 +1,5 @@
 // Configurações
-const API_URL = 'http://18.212.217.221:3000/api'; // Altere para o IP do seu servidor
+const API_URL = "http:localhost:3000/api"; // Altere para o IP do seu servidor
 const transferList = document.getElementById('transferList');
 const detailsModal = document.getElementById('detailsModal');
 const modalBody = document.getElementById('modalBody');

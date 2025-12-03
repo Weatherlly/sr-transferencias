@@ -1,12 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
 const cors = require('cors');
 
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 const DATA_DIR = path.join(__dirname, 'transferencias');
-const IP = process.env.IP || '0.0.0.0';
+const IP = process.env.IP;
 
 // Configurações
 app.use(cors({
