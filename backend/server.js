@@ -17,7 +17,7 @@ const TRANSFERENCIAS_DIR = path.join(__dirname, 'transferencias');
 // Configurações do Express
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Criar diretório se não existir
 async function ensureTransferenciasDir() {
