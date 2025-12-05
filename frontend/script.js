@@ -1,5 +1,5 @@
 // Configurações
-const API_URL = "http://18.212.217.221:3000/api"; // Altere para o IP do seu servidor
+const API_URL = "http://18.212.217.221:3000/api";
 const transferList = document.getElementById('transferList');
 const detailsModal = document.getElementById('detailsModal');
 const modalBody = document.getElementById('modalBody');
@@ -7,6 +7,9 @@ const closeBtn = document.querySelector('.close-btn');
 
 // Formatar data
 function formatDate(dateString) {
+    if (!dateString || !dateString.includes(' - ')) {
+        return { date: '--/--/----', time: '--:--:--' };
+    }
     const [datePart, timePart] = dateString.split(' - ');
     return { date: datePart, time: timePart };
 }
