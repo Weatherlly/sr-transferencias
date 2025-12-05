@@ -100,6 +100,11 @@
                 <input type="number" id="item8" min="0" step="0.001" placeholder="Peso (kg)">
             </div>
 
+            <div class="form-group">
+                <label for="item9">018676 - Consomê de Frango:</label>
+                <input type="number" id="item8" min="0" step="0.001" placeholder="Peso (kg)">
+            </div>
+
             <button type="submit">
                 <i class="fas fa-save"></i> Registrar Transferência
             </button>
@@ -110,7 +115,7 @@
 
     <script>
         // Configuração do endpoint do servidor
-        const API_URL = "http://localhost:3000/api"; // Altere para o IP do seu servidor
+        const API_URL = "http://18.212.217.221:3000/api"; // Altere para o IP do seu servidor
 
         // Atualiza data/hora atual
         function atualizarDataHora() {
@@ -194,7 +199,8 @@
                 itensPeso: {
                     "160599 - Sopa de Costela": document.getElementById('item6').value || 0,
                     "151542 - Sopa Canja de Galinha": document.getElementById('item7').value || 0,
-                    "151559 - Caldo de Carne": document.getElementById('item8').value || 0
+                    "151559 - Caldo de Carne": document.getElementById('item8').value || 0,
+                    "018676 - Consomê de Frango": document.getElementById('item9').value || 0
                 }
             };
             
