@@ -1,4 +1,4 @@
-// Configurações
+// Configurações - USA O IP DA AWS
 const API_URL = "http://18.212.217.221:3000/api";
 const transferList = document.getElementById('transferList');
 const detailsModal = document.getElementById('detailsModal');
@@ -17,6 +17,14 @@ function formatDate(dateString) {
 // Carregar transferências
 async function loadTransfers() {
     try {
+        // Mostrar estado de carregamento
+        transferList.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <div class="spinner"></div>
+                <p>Carregando transferências...</p>
+            </div>
+        `;
+        
         const response = await fetch(`${API_URL}/transferencias`);
         if (!response.ok) throw new Error('Erro ao carregar transferências');
         
@@ -32,12 +40,24 @@ async function loadTransfers() {
         displayTransfers(transfersOrdenadas);
     } catch (error) {
         console.error('Erro:', error);
-        transferList.innerHTML = `<p class="error-message">${error.message}</p>`;
+        transferList.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>${error.message}</p>
+                <button onclick="loadTransfers()" style="margin-top: 10px;">
+                    Tentar novamente
+                </button>
+            </div>
+        `;
     }
 }
 
 // Função para converter o formato brasileiro
 function converterDataHora(dataHoraString) {
+    if (!dataHoraString || !dataHoraString.includes(' - ')) {
+        return new Date(0);
+    }
+    
     const [data, hora] = dataHoraString.split(' - ');
     const [dia, mes, ano] = data.split('/');
     const [h, m, s] = hora.split(':');
@@ -47,8 +67,14 @@ function converterDataHora(dataHoraString) {
 
 // Exibir transferências em cards
 function displayTransfers(transfers) {
-    if (transfers.length === 0) {
-        transferList.innerHTML = '<p class="no-transfers">Nenhuma transferência registrada ainda.</p>';
+    if (!transfers || transfers.length === 0) {
+        transferList.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 20px;"></i>
+                <h3>Nenhuma transferência registrada ainda.</h3>
+                <p>Clique em "Nova Transferência" para começar.</p>
+            </div>
+        `;
         return;
     }
 
@@ -68,6 +94,10 @@ function displayTransfers(transfers) {
                 <div><i class="fas fa-store"></i> <strong>Origem:</strong> ${transfer.lojaOrigem}</div>
                 <div><i class="fas fa-truck"></i> <strong>Destino:</strong> ${transfer.lojaDestino}</div>
             </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                <i class="fas fa-pizza-slice"></i> Pizzas: ${Object.keys(transfer.itensQuantidade || {}).length} |
+                <i class="fas fa-utensils"></i> Sopas: ${Object.keys(transfer.itensPeso || {}).length}
+            </div>
         `;
         
         card.addEventListener('click', () => openModal(transfer));
@@ -78,47 +108,50 @@ function displayTransfers(transfers) {
 // Abrir modal com detalhes
 function openModal(transfer) {
     try {
-        // Formatação segura da data/hora
-        const { date, time } = transfer.dataHora ? formatDate(transfer.dataHora) : { 
-            date: '--/--/----', 
-            time: '--:--:--' 
-        };
+        const { date, time } = formatDate(transfer.dataHora);
 
         // Helper function para renderizar itens
         const renderItems = (items, isWeight = false) => {
-            if (!items) return '<p>Nenhum item registrado</p>';
+            if (!items) return '<p style="color: #666; font-style: italic;">Nenhum item registrado</p>';
             
             const entries = Object.entries(items)
                 .filter(([_, qtd]) => parseFloat(qtd) > 0)
                 .map(([item, qtd]) => {
                     const itemName = item.split(' - ')[1] || item;
                     const unit = isWeight ? 'kg' : 'unidade(s)';
-                    return `<p><strong>${itemName}:</strong> ${qtd} ${unit}</p>`;
+                    return `<p style="margin: 5px 0;"><strong>${itemName}:</strong> ${qtd} ${unit}</p>`;
                 });
             
-            return entries.length > 0 ? entries.join('') : '<p>Nenhum item transferido</p>';
+            return entries.length > 0 ? entries.join('') : '<p style="color: #666; font-style: italic;">Nenhum item transferido</p>';
         };
 
         modalBody.innerHTML = `
-            <div class="modal-item">
-                <h4><i class="far fa-calendar-alt"></i> Data e Hora</h4>
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 5px;"><i class="far fa-calendar-alt"></i> Data e Hora</h4>
                 <p>${date} às ${time}</p>
             </div>
             
-            <div class="modal-item">
-                <h4><i class="fas fa-exchange-alt"></i> Transferência</h4>
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 5px;"><i class="fas fa-exchange-alt"></i> Transferência</h4>
                 <p><strong>Origem:</strong> ${transfer.lojaOrigem || 'Não informada'}</p>
                 <p><strong>Destino:</strong> ${transfer.lojaDestino || 'Não informada'}</p>
             </div>
             
-            <div class="modal-item">
-                <h4><i class="fas fa-pizza-slice"></i> Pizzas</h4>
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 5px;"><i class="fas fa-pizza-slice"></i> Pizzas</h4>
                 ${renderItems(transfer.itensQuantidade)}
             </div>
             
-            <div class="modal-item">
-                <h4><i class="fas fa-utensils"></i> Sopas e Caldos</h4>
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 5px;"><i class="fas fa-utensils"></i> Sopas e Caldos</h4>
                 ${renderItems(transfer.itensPeso, true)}
+            </div>
+            
+            <div style="border-top: 1px solid #eee; padding-top: 15px; text-align: center;">
+                <button onclick="deleteTransfer(${transfer.id}, '${transfer.lojaOrigem} → ${transfer.lojaDestino}')" 
+                        style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-trash"></i> Excluir Transferência
+                </button>
             </div>
         `;
         
@@ -126,12 +159,38 @@ function openModal(transfer) {
     } catch (error) {
         console.error('Erro ao abrir modal:', error);
         modalBody.innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
+            <div style="text-align: center; padding: 20px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #f39c12;"></i>
                 <p>Não foi possível carregar os detalhes desta transferência</p>
             </div>
         `;
         detailsModal.style.display = 'flex';
+    }
+}
+
+// Função para excluir transferência
+async function deleteTransfer(id, description) {
+    if (!confirm(`Tem certeza que deseja excluir a transferência?\n${description}`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/transferencias/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ Transferência excluída com sucesso!');
+            loadTransfers(); // Recarregar lista
+            detailsModal.style.display = 'none'; // Fechar modal
+        } else {
+            alert('❌ Erro ao excluir: ' + (result.message || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        console.error('Erro ao excluir:', error);
+        alert('❌ Erro de conexão ao excluir transferência');
     }
 }
 
@@ -149,3 +208,6 @@ window.addEventListener('click', (e) => {
 
 // Carregar dados quando a página abrir
 document.addEventListener('DOMContentLoaded', loadTransfers);
+
+// Atualizar automaticamente a cada 30 segundos
+setInterval(loadTransfers, 30000);

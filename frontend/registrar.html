@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -114,8 +116,8 @@
     </div>
 
     <script>
-        // Configuração do endpoint do servidor
-        const API_URL = "http://18.212.217.221:3000/api"; // Altere para o IP do seu servidor
+        // Configuração do endpoint do servidor - USA IP DA AWS
+        const API_URL = "http://18.212.217.221:3000/api";
 
         // Atualiza data/hora atual
         function atualizarDataHora() {
@@ -126,7 +128,7 @@
             const horas = String(now.getHours()).padStart(2, '0');
             const minutos = String(now.getMinutes()).padStart(2, '0');
             const segundos = String(now.getSeconds()).padStart(2, '0');
-            
+
             document.getElementById('dataHora').value = `${dia}/${mes}/${ano} - ${horas}:${minutos}:${segundos}`;
         }
 
@@ -136,7 +138,7 @@
             statusDiv.textContent = message;
             statusDiv.className = isSuccess ? 'success' : 'error';
             statusDiv.style.display = 'block';
-            
+
             setTimeout(() => {
                 statusDiv.style.display = 'none';
             }, 5000);
@@ -154,8 +156,8 @@
                 });
 
                 const result = await response.json();
-                
-                if (response.ok) {
+
+                if (response.ok && result.success) {
                     showStatus(result.message || 'Transferência registrada com sucesso!', true);
                     return true;
                 } else {
@@ -172,18 +174,23 @@
         window.onload = atualizarDataHora;
 
         // Validação do formulário
-        document.getElementById('transferForm').addEventListener('submit', async function(e) {
+        document.getElementById('transferForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+
             // Valida lojas diferentes
             const lojaOrigem = document.getElementById('lojaOrigem').value;
             const lojaDestino = document.getElementById('lojaDestino').value;
-            
+
             if (lojaOrigem === lojaDestino) {
                 showStatus('A loja de origem e destino não podem ser iguais!', false);
                 return;
             }
-            
+
+            if (!lojaOrigem || !lojaDestino) {
+                showStatus('Selecione a loja de origem e destino!', false);
+                return;
+            }
+
             // Coleta os dados do formulário
             const transferencia = {
                 dataHora: document.getElementById('dataHora').value,
@@ -203,16 +210,22 @@
                     "018676 - Consomê de Frango": document.getElementById('item9').value || 0
                 }
             };
-            
+
             // Envia para o servidor
             const enviado = await enviarParaServidor(transferencia);
-            
+
             if (enviado) {
                 // Limpa o formulário após o envio
                 this.reset();
                 atualizarDataHora();
+
+                // Redireciona após 2 segundos
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
             }
         });
     </script>
 </body>
+
 </html>

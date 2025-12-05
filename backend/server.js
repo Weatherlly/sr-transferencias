@@ -17,6 +17,8 @@ const TRANSFERENCIAS_DIR = path.join(__dirname, 'transferencias');
 // Configurações do Express
 app.use(cors());
 app.use(express.json());
+
+// ✅ CORREÇÃO: Servir frontend do caminho correto
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Criar diretório se não existir
@@ -56,7 +58,7 @@ app.post('/api/transferencias', async (req, res) => {
         }
 
         // Criar nome único para o arquivo
-        const fileName = `transferencia_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.json`;
+        const fileName = `transferencia_${Date.now()}.json`;
         const filePath = path.join(TRANSFERENCIAS_DIR, fileName);
 
         // Adicionar timestamp de criação
@@ -66,7 +68,7 @@ app.post('/api/transferencias', async (req, res) => {
         // Salvar no arquivo
         await fs.writeFile(filePath, JSON.stringify(data, null, 2));
         
-        console.log(`✅ Transferência salva: ${fileName}`);
+        console.log(`✅ Transferência salva: ${data.lojaOrigem} → ${data.lojaDestino}`);
         res.status(201).json({ 
             success: true, 
             message: 'Transferência registrada com sucesso!',
@@ -101,7 +103,10 @@ app.get('/api/transferencias', async (req, res) => {
             }
         }
         
-        console.log(`📊 ${transferencias.length} transferências encontradas`);
+        // Ordenar do mais recente para o mais antigo
+        transferencias.sort((a, b) => b.id - a.id);
+        
+        console.log(`📊 ${transferencias.length} transferências carregadas`);
         res.json(transferencias);
         
     } catch (error) {
@@ -161,51 +166,32 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// Rota raiz - página inicial
+// Rota raiz - redireciona para index.html
 app.get('/', (req, res) => {
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Super Raimundinho - Transferências</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                h1 { color: #2c3e50; }
-                .links { margin: 20px 0; }
-                .links a { display: block; margin: 10px 0; padding: 10px; 
-                          background: #3498db; color: white; text-decoration: none; 
-                          border-radius: 5px; }
-                .links a:hover { background: #2980b9; }
-                .info { background: #f8f9fa; padding: 15px; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1>Super Raimundinho - Sistema de Transferências</h1>
-            <div class="info">
-                <p><strong>Servidor rodando na porta:</strong> ${PORT}</p>
-                <p><strong>IP Público:</strong> ${PUBLIC_IP}</p>
-            </div>
-            <div class="links">
-                <a href="/registrar.html">📝 Registrar Nova Transferência</a>
-                <a href="/index.html">📋 Listar Transferências</a>
-                <a href="/api/transferencias">🔧 API de Transferências (JSON)</a>
-                <a href="/api/status">📊 Status do Servidor</a>
-            </div>
-        </body>
-        </html>
-    `);
+    res.redirect('/index.html');
 });
 
 // ============================================
 // MANIPULAÇÃO DE ERROS
 // ============================================
 
-// Rota não encontrada
-app.use((req, res) => {
-    res.status(404).json({ 
-        error: 'Rota não encontrada',
-        available: ['/', '/registrar.html', '/index.html', '/api/transferencias', '/api/status']
-    });
+// Rota não encontrada - SERVE ARQUIVOS HTML SE EXISTIREM
+app.use((req, res, next) => {
+    // Tenta servir como arquivo estático primeiro
+    const filePath = path.join(__dirname, '../frontend', req.path);
+    
+    fs.access(filePath)
+        .then(() => {
+            // Se o arquivo existe, serve ele
+            res.sendFile(filePath);
+        })
+        .catch(() => {
+            // Se não existe, retorna 404
+            res.status(404).json({ 
+                error: 'Rota não encontrada',
+                available: ['/', '/registrar.html', '/index.html', '/api/transferencias', '/api/status']
+            });
+        });
 });
 
 // ============================================
